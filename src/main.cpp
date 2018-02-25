@@ -47,11 +47,10 @@ static void DrawVelocity(void)
 
 	FOR_EACH_CELL
 		float x = i * h;
-
 		float y = j * h;
 
-		float u = solver.u[XY_TO_ARRAY(i, j)];
-		float v = solver.v[XY_TO_ARRAY(i, j)];
+		float u = solver.u[XY_TO_ARRAY(i, j)]*h;
+		float v = solver.v[XY_TO_ARRAY(i, j)]*h;
 
 		if (u - v < 0) {
 			glColor3f(1, 0, 0);
@@ -74,6 +73,7 @@ static void DrawDensity(void)
 	float h = 1.0f / N;
 
 	glBegin(GL_QUADS);
+	
 	for (i = 0; i <= N; i++) {
 
 		float x = (i - 0.5f) * h;
@@ -81,14 +81,19 @@ static void DrawDensity(void)
 		for (j = 0; j <= N; j++) {
 
 			float y = (j - 0.5f) * h;
-
-			float den = solver.dens[XY_TO_ARRAY(i, j)];
-			glColor3f(den, den, den);
-
+			
+			glColor3f(solver.dens[XY_TO_ARRAY(i, j)], solver.dens[XY_TO_ARRAY(i, j)], solver.dens[XY_TO_ARRAY(i, j)]);
 			glVertex2f(x, y);
+
+			glColor3f(solver.dens[XY_TO_ARRAY(i+1, j)], solver.dens[XY_TO_ARRAY(i+1, j)], solver.dens[XY_TO_ARRAY(i+1, j)]);
 			glVertex2f(x + h, y);
+
+			glColor3f(solver.dens[XY_TO_ARRAY(i+1, j+1)], solver.dens[XY_TO_ARRAY(i+1, j+1)], solver.dens[XY_TO_ARRAY(i+1, j+1)]);
 			glVertex2f(x + h, y + h);
+
+			glColor3f(solver.dens[XY_TO_ARRAY(i, j+1)], solver.dens[XY_TO_ARRAY(i, j+1)], solver.dens[XY_TO_ARRAY(i, j+1)]);
 			glVertex2f(x, y + h);
+			
 		}
 	}
 

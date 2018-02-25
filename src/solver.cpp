@@ -1,8 +1,9 @@
 #include "solver.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstdio>
+#include <iostream>
+#include <cstring>
+#include <cmath>
 
 void Solver::Init(unsigned N, float dt, float diff, float visc)
 {
@@ -92,8 +93,8 @@ void Solver::DensStep()
 	AddSource(dens, dens_prev);			//Adding input density (dens_prev) to final density (dens).
 	SWAP(dens_prev, dens)				//Swapping matrixes, because we want save the next result in dens, not in dens_prev.
 	Diffuse(0, dens, dens_prev);		//Writing result in dens because we made the swap before. bi = dens_prev. The initial trash in dens matrix, doesnt matter, because it converges anyways.
-	SWAP(dens_prev, dens)				//Swapping matrixes, because we want save the next result in dens, not in dens_prev.
-	Advect(0, dens, dens_prev, u, v);	//Advect phase, result in dens.
+	//SWAP(dens_prev, dens)				//Swapping matrixes, because we want save the next result in dens, not in dens_prev.
+	//Advect(0, dens, dens_prev, u, v);	//Advect phase, result in dens.
 }
 
 void Solver::VelStep()
@@ -104,12 +105,12 @@ void Solver::VelStep()
 	SWAP (v_prev, v)
 	Diffuse(1, u, u_prev);  
 	Diffuse(2, v, v_prev); 
-	Project(u, v, u_prev, v_prev);		//Mass conserving.
-	SWAP (u_prev,u)			
-	SWAP (v_prev,v)
-	Advect(1, u, u_prev, u_prev, v_prev);
-	Advect(2, v, v_prev, u_prev, v_prev);
-	Project(u, v, u_prev, v_prev);		//Mass conserving.
+	//Project(u, v, u_prev, v_prev);		//Mass conserving.
+	//SWAP (u_prev,u)			
+	//SWAP (v_prev,v)
+	//Advect(1, u, u_prev, u_prev, v_prev);
+	//Advect(2, v, v_prev, u_prev, v_prev);
+	//Project(u, v, u_prev, v_prev);		//Mass conserving.
 }
 
 void Solver::AddSource(float * base, float * source)
@@ -154,7 +155,16 @@ Gauss Seidel -> Matrix x and x0
 */
 void Solver::LinSolve(int b, float * x, float * x0, float aij, float aii)
 {
-//TODO: Se recomienda usar FOR_EACH_CELL, END_FOR y XY_TO_ARRAY.
+// Se recomienda usar FOR_EACH_CELL, END_FOR y XY_TO_ARRAY.
+	int i, j;
+	for (int k = 0; k < 25; ++k) {
+		FOR_EACH_CELL
+			x[XY_TO_ARRAY(i, j)] = (x0[XY_TO_ARRAY(i, j)] - aij * (x[XY_TO_ARRAY(i + 1, j)] + x[XY_TO_ARRAY(i - 1, j)] +
+				x[XY_TO_ARRAY(i, j + 1)] + x[XY_TO_ARRAY(i, j - 1)])) / aii;
+		END_FOR
+
+		SetBounds(b, x);
+	}
 }
 
 /*
@@ -163,7 +173,11 @@ por lo que solo con la entrada de dos valores, debemos poder obtener el resultad
 */
 void Solver::Diffuse(int b, float * x, float * x0)
 {
-//TODO: Solo necesitaremos pasar dos parámetros a nuestro resolutor de sistemas de ecuaciones de Gauss Seidel. Calculamos dichos valores y llamamos a la resolución del sistema.
+// Solo necesitaremos pasar dos parámetros a nuestro resolutor de sistemas de ecuaciones de Gauss Seidel. Calculamos dichos valores y llamamos a la resolución del sistema.
+	float a = dt * diff * N * N;
+	float aii = 1 + 4*a;
+	float aij = -a;
+	LinSolve(b, x, x0, aij, aii);
 }
 
 /*
@@ -173,7 +187,13 @@ en las posiciones x,5.
 */
 void Solver::Advect(int b, float * d, float * d0, float * u, float * v)
 {
-//TODO: Se aplica el campo vectorial realizando una interploación lineal entre las 4 casillas más cercanas donde caiga el nuevo valor.
+// Se aplica el campo vectorial realizando una interploación lineal entre las 4 casillas más cercanas donde caiga el nuevo valor.
+	int i, j;
+	//FOR_EACH_CELL
+		//float ent;
+		//float decimal = modf((float) d0[XY_TO_ARRAY(i, j)] * dt, &ent);
+		//std::cout << decimal << std::endl;
+	//END_FOR
 }
 
 /*
