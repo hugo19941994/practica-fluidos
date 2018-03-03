@@ -9,6 +9,7 @@ static int N;
 static float dt, diff, visc;
 static float force, source;
 static bool dvel;
+static bool pixel;
 
 static int win_id;
 static int win_x, win_y;	//Window Size.
@@ -49,17 +50,17 @@ static void DrawVelocity(void)
 		float x = i * h;
 		float y = j * h;
 
-		float u = solver.u[XY_TO_ARRAY(i, j)]*h;
-		float v = solver.v[XY_TO_ARRAY(i, j)]*h;
+		float u = x + solver.u[XY_TO_ARRAY(i, j)];
+		float v = y + solver.v[XY_TO_ARRAY(i, j)];
 
-		if (u - v < 0) {
+		if (u - x < 0) {
 			glColor3f(1, 0, 0);
 		} else {
 			glColor3f(0, 1, 0);
 		}
 
 		glVertex2f(x, y);
-		glVertex2f(x + u, y + v);
+		glVertex2f(u, v);
 
 	END_FOR
 
@@ -83,15 +84,17 @@ static void DrawDensity(void)
 			float y = (j - 0.5f) * h;
 			
 			glColor3f(solver.dens[XY_TO_ARRAY(i, j)], solver.dens[XY_TO_ARRAY(i, j)], solver.dens[XY_TO_ARRAY(i, j)]);
+
+			if (!pixel) glColor3f(solver.dens[XY_TO_ARRAY(i, j)], solver.dens[XY_TO_ARRAY(i, j)], solver.dens[XY_TO_ARRAY(i, j)]);
 			glVertex2f(x, y);
 
-			glColor3f(solver.dens[XY_TO_ARRAY(i+1, j)], solver.dens[XY_TO_ARRAY(i+1, j)], solver.dens[XY_TO_ARRAY(i+1, j)]);
+			if (!pixel) glColor3f(solver.dens[XY_TO_ARRAY(i+1, j)], solver.dens[XY_TO_ARRAY(i+1, j)], solver.dens[XY_TO_ARRAY(i+1, j)]);
 			glVertex2f(x + h, y);
 
-			glColor3f(solver.dens[XY_TO_ARRAY(i+1, j+1)], solver.dens[XY_TO_ARRAY(i+1, j+1)], solver.dens[XY_TO_ARRAY(i+1, j+1)]);
+			if (!pixel) glColor3f(solver.dens[XY_TO_ARRAY(i+1, j+1)], solver.dens[XY_TO_ARRAY(i+1, j+1)], solver.dens[XY_TO_ARRAY(i+1, j+1)]);
 			glVertex2f(x + h, y + h);
 
-			glColor3f(solver.dens[XY_TO_ARRAY(i, j+1)], solver.dens[XY_TO_ARRAY(i, j+1)], solver.dens[XY_TO_ARRAY(i, j+1)]);
+			if (!pixel) glColor3f(solver.dens[XY_TO_ARRAY(i, j+1)], solver.dens[XY_TO_ARRAY(i, j+1)], solver.dens[XY_TO_ARRAY(i, j+1)]);
 			glVertex2f(x, y + h);
 			
 		}
@@ -154,6 +157,11 @@ static void KeyFunc(unsigned char key, int x, int y)
 	case 'v':
 	case 'V':
 		dvel = !dvel;
+		break;
+
+	case 'p':
+	case 'P':
+		pixel = !pixel;
 		break;
 	}
 }
@@ -277,10 +285,12 @@ int main(int argc, char ** argv)
 	printf("\t Add densities with the right mouse button\n");
 	printf("\t Add velocities with the left mouse button and dragging the mouse\n");
 	printf("\t Toggle density/velocity display with the 'v' key\n");
+	printf("\t Toggle retro mode by pressing the 'p' key\n");
 	printf("\t Clear the simulation by pressing the 'c' key\n");
 	printf("\t Quit by pressing the 'q' key\n");
 
 	dvel = false;
+	pixel = false;
 	
 	solver.Init(N, dt, diff, visc);
 

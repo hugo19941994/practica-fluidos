@@ -93,8 +93,8 @@ void Solver::DensStep()
 	AddSource(dens, dens_prev);			//Adding input density (dens_prev) to final density (dens).
 	SWAP(dens_prev, dens)				//Swapping matrixes, because we want save the next result in dens, not in dens_prev.
 	Diffuse(0, dens, dens_prev);		//Writing result in dens because we made the swap before. bi = dens_prev. The initial trash in dens matrix, doesnt matter, because it converges anyways.
-	//SWAP(dens_prev, dens)				//Swapping matrixes, because we want save the next result in dens, not in dens_prev.
-	//Advect(0, dens, dens_prev, u, v);	//Advect phase, result in dens.
+	SWAP(dens_prev, dens)				//Swapping matrixes, because we want save the next result in dens, not in dens_prev.
+	Advect(0, dens, dens_prev, u, v);	//Advect phase, result in dens.
 }
 
 void Solver::VelStep()
@@ -105,12 +105,12 @@ void Solver::VelStep()
 	SWAP (v_prev, v)
 	Diffuse(1, u, u_prev);  
 	Diffuse(2, v, v_prev); 
-	//Project(u, v, u_prev, v_prev);		//Mass conserving.
-	//SWAP (u_prev,u)			
-	//SWAP (v_prev,v)
-	//Advect(1, u, u_prev, u_prev, v_prev);
-	//Advect(2, v, v_prev, u_prev, v_prev);
-	//Project(u, v, u_prev, v_prev);		//Mass conserving.
+	Project(u, v, u_prev, v_prev);		//Mass conserving.
+	SWAP (u_prev,u)			
+	SWAP (v_prev,v)
+	Advect(1, u, u_prev, u_prev, v_prev);
+	Advect(2, v, v_prev, u_prev, v_prev);
+	Project(u, v, u_prev, v_prev);		//Mass conserving.
 }
 
 void Solver::AddSource(float * base, float * source)
@@ -187,13 +187,27 @@ en las posiciones x,5.
 */
 void Solver::Advect(int b, float * d, float * d0, float * u, float * v)
 {
-// Se aplica el campo vectorial realizando una interploación lineal entre las 4 casillas más cercanas donde caiga el nuevo valor.
 	int i, j;
-	//FOR_EACH_CELL
-		//float ent;
-		//float decimal = modf((float) d0[XY_TO_ARRAY(i, j)] * dt, &ent);
-		//std::cout << decimal << std::endl;
-	//END_FOR
+	FOR_EACH_CELL
+		float pu = static_cast<float>(i) - u[XY_TO_ARRAY(i, j)] * dt * N;
+	    float pv = static_cast<float>(j) - v[XY_TO_ARRAY(i, j)] * dt * N;
+
+		pu = pu < 0.5f ? 0.5f : pu > N + 0.5f ? N + 0.5f : pu;
+		pv = pv < 0.5f ? 0.5f : pv > N + 0.5f ? N + 0.5f : pv;
+    
+		// Para acceder a d0
+	    int iu = static_cast<int>(pu);
+	    int iv = static_cast<int>(pv);
+    
+		// diffs
+	    float du = std::abs(pu - iu);
+	    float dv = std::abs(pv - iv);
+    
+	    d[XY_TO_ARRAY(i, j)] = ((1 - du) * (1 - dv)) * d0[XY_TO_ARRAY(iu, iv)]
+		                     + ((1 - du) * dv)       * d0[XY_TO_ARRAY(iu, iv + 1)]
+		                     + (du       * (1 - dv)) * d0[XY_TO_ARRAY(iu + 1, iv)]
+		                     + (du       * dv)       * d0[XY_TO_ARRAY(iu + 1, iv + 1)];
+	END_FOR
 }
 
 /*
